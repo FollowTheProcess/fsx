@@ -57,13 +57,14 @@ func New() fsx.FileSystem {
 // Create creates a new named file (truncating it if it already exists).
 func (i *InMemory) Create(name string) (fsx.File, error) {
 	name = filepath.Clean(filepath.FromSlash(name))
-	f, exists := i.files[name]
+	path := filepath.Join(separator, name)
+	f, exists := i.files[path]
 	if exists {
 		// If it exists, truncate it
 		if err := f.Truncate(0); err != nil {
-			return nil, fmt.Errorf("could not truncate %s: %w", name, err)
+			return nil, fmt.Errorf("could not truncate %s: %w", path, err)
 		}
-		i.files[name] = f
+		i.files[path] = f
 		return f, nil
 	}
 
@@ -73,7 +74,7 @@ func (i *InMemory) Create(name string) (fsx.File, error) {
 		mode:   defaultFilePermissions,
 		exists: true,
 	}
-	i.files[name] = f
+	i.files[path] = f
 
 	return f, nil
 }
