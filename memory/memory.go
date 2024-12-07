@@ -6,24 +6,10 @@ package memory
 import (
 	"fmt"
 	"io/fs"
-	"os"
 	"path/filepath"
 
 	"github.com/FollowTheProcess/fsx"
-)
-
-const (
-	defaultDirPermissions  = 0o755 // Default permissions for a directory, same as mkdir
-	defaultFilePermissions = 0o666 // Default permissions for a file, same as touch
-
-	separator     = string(filepath.Separator)
-	flagCreate    = os.O_CREATE
-	flagExclusive = os.O_EXCL
-	flagAppend    = os.O_APPEND
-	flagTruncate  = os.O_TRUNC
-	flagReadWrite = os.O_RDWR
-	flagReadOnly  = os.O_RDONLY
-	flagWriteOnly = os.O_WRONLY
+	"github.com/FollowTheProcess/fsx/internal/flag"
 )
 
 // Compile time interface checks, these will fail to compile if we ever violate our interfaces.
@@ -32,22 +18,22 @@ var (
 	_ fsx.FileSystem = &InMemory{}
 )
 
-// InMemory is an implementation of a [FileSystem] backed by an in-memory
+// InMemory is an implementation of an [fsx.FileSystem] backed by an in-memory
 // storage backend.
 type InMemory struct {
 	// The files in the filesystem, mapped by their full path (with os-specific separator).
 	files map[string]*file
 }
 
-// New creates and returns a new [FileSystem] backed by an in-memory storage system
+// New creates and returns a new [fsx.FileSystem] backed by an in-memory storage system
 // so that file io operations can be performed as normal but without touching the real OS filesystem.
 func New() fsx.FileSystem {
 	return &InMemory{
 		// Create the root
 		files: map[string]*file{
-			separator: {
-				name:   separator,
-				mode:   defaultDirPermissions | fs.ModeDir,
+			fsx.Separator: {
+				name:   fsx.Separator,
+				mode:   fsx.DefaultDirPermissions | fs.ModeDir,
 				exists: true,
 			},
 		},
@@ -57,7 +43,7 @@ func New() fsx.FileSystem {
 // Create creates a new named file (truncating it if it already exists).
 func (i *InMemory) Create(name string) (fsx.File, error) {
 	name = filepath.Clean(filepath.FromSlash(name))
-	path := filepath.Join(separator, name)
+	path := filepath.Join(fsx.Separator, name)
 	f, exists := i.files[path]
 	if exists {
 		// If it exists, truncate it
@@ -70,8 +56,8 @@ func (i *InMemory) Create(name string) (fsx.File, error) {
 
 	f = &file{
 		name:   name,
-		flag:   flagReadWrite | flagCreate | flagTruncate,
-		mode:   defaultFilePermissions,
+		flag:   flag.ReadWrite | flag.Create | flag.Truncate,
+		mode:   fsx.DefaultFilePermissions,
 		exists: true,
 	}
 	i.files[path] = f
@@ -89,12 +75,12 @@ type file struct {
 }
 
 // Name returns the name of the file.
-func (f file) Name() string {
+func (f *file) Name() string {
 	return f.name
 }
 
 // Exists reports whether the file exists in the filesystem.
-func (f file) Exists() bool {
+func (f *file) Exists() bool {
 	return f.exists
 }
 
