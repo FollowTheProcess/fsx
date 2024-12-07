@@ -3,6 +3,21 @@
 // backed test filesystem.
 package fsx
 
+import "path/filepath"
+
+const (
+	// DefaultDirPermissions are the default UNIX permission bits for a new directory, they
+	// are the equivalent permissions to the result of running mkdir.
+	DefaultDirPermissions = 0o755
+
+	// DefaultFilePermissions are the default UNIX permission bits for a new file, they
+	// are the equivalent permissions to the result of running touch.
+	DefaultFilePermissions = 0o666
+
+	// Separator is the OS-specific filepath separator.
+	Separator = string(filepath.Separator)
+)
+
 // FileSystem represents an abstract filesystem in a storage-agnostic interface.
 type FileSystem interface {
 	// Create creates a new named file (truncating it if it already exists).
@@ -18,6 +33,8 @@ type File interface {
 	// io.WriterAt
 	// io.Seeker
 	// io.Closer
+
+	// TODO(@FollowTheProcess): Add the rest of the methods from os.File
 
 	// Name returns the name of the file as presented to Open.
 	//
